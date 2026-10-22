@@ -58,7 +58,7 @@ class Customer(metaclass=Table):
     @classmethod
     def generate(
         cls, count: int, seed: int = 42, store_instances: list | None = None,
-        generation_date: date | None = None,
+        generation_date: date,
     ) -> None:
         rng = np.random.default_rng(seed)
         fake = Faker()
@@ -79,7 +79,7 @@ class Customer(metaclass=Table):
 
         # Signup dates: exponential decay toward recent (higher λ = more recent)
         signup_start_ord = SIGNUP_START.toordinal()
-        generation_date_ord = (generation_date or date.today()).toordinal()
+        generation_date_ord = generation_date.toordinal()
         date_range = generation_date_ord - signup_start_ord
         # Exponential samples concentrate near 0; flip so most signups are recent
         exp_samples = rng.exponential(scale=0.4, size=count)
