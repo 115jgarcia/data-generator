@@ -3,8 +3,6 @@
 Usage:
     uv run retail-gen                         # Generate all at SCALE
     uv run retail-gen --only stores,products  # Specific entities
-    uv run retail-gen --upload                # Generate + upload
-    uv run retail-gen --upload-only           # Upload existing output/
 """
 
 from __future__ import annotations
@@ -233,14 +231,6 @@ def generate_all(cfg: Config, only: list[str] | None = None) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Retail data generator")
     parser.add_argument("--only", type=str, help="Comma-separated entity names")
-    parser.add_argument(
-        "--upload", action="store_true", help="Upload to GCS + BQ after generation"
-    )
-    parser.add_argument(
-        "--upload-only",
-        action="store_true",
-        help="Skip generation, upload existing output/",
-    )
     args = parser.parse_args()
 
     cfg = Config()
@@ -250,15 +240,7 @@ def main() -> None:
 
     only = args.only.split(",") if args.only else None
 
-    if not args.upload_only:
-        generate_all(cfg, only=only)
-
-    if args.upload or args.upload_only:
-        from retail_gen.upload.gcs import upload_to_gcs
-        from retail_gen.upload.bigquery import load_to_bigquery
-
-        upload_to_gcs(cfg)
-        load_to_bigquery(cfg)
+    generate_all(cfg, only=only)
 
 
 if __name__ == "__main__":

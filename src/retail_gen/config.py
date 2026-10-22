@@ -33,15 +33,6 @@ class Config:
         default_factory=lambda: Path(os.getenv("OUTPUT_DIR", "output"))
     )
 
-    # GCP settings
-    bq_project: str = field(
-        default_factory=lambda: os.getenv("BQ_PROJECT", "mkt-analytics-project")
-    )
-    bq_dataset: str = field(
-        default_factory=lambda: os.getenv("BQ_DATASET", "retail_raw")
-    )
-    gcs_bucket: str = field(default_factory=lambda: os.getenv("GCS_BUCKET", ""))
-
     # --- Fixed dimensions (do not scale) ---
     n_stores: int = 150
     n_products: int = 5000
