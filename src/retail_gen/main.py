@@ -65,7 +65,6 @@ def _resolve_deps(requested: list[str]) -> list[str]:
 
 def generate_all(cfg: Config, only: list[str] | None = None) -> None:
     """Run the generation pipeline in dependency order."""
-    import numpy as np
     import pandas as pd
 
     if only:

@@ -57,8 +57,11 @@ class Customer(metaclass=Table):
 
     @classmethod
     def generate(
-        cls, count: int, seed: int = 42, store_instances: list | None = None,
+        cls,
+        count: int,
         generation_date: date,
+        seed: int = 42,
+        store_instances: list | None = None,
     ) -> None:
         rng = np.random.default_rng(seed)
         fake = Faker()
@@ -83,7 +86,9 @@ class Customer(metaclass=Table):
         date_range = generation_date_ord - signup_start_ord
         # Exponential samples concentrate near 0; flip so most signups are recent
         exp_samples = rng.exponential(scale=0.4, size=count)
-        exp_samples = 1.0 - (exp_samples / exp_samples.max())  # flip: 1=recent, 0=oldest
+        exp_samples = 1.0 - (
+            exp_samples / exp_samples.max()
+        )  # flip: 1=recent, 0=oldest
         signup_ords = signup_start_ord + (exp_samples * date_range).astype(int)
         signup_ords = np.clip(signup_ords, signup_start_ord, generation_date_ord)
 
@@ -93,7 +98,9 @@ class Customer(metaclass=Table):
             store_id_pool = [s.id for s in store_instances]
             has_store = rng.random(size=count) < 0.70
             store_choices = rng.choice(store_id_pool, size=count)
-            store_ids = [int(store_choices[i]) if has_store[i] else None for i in range(count)]
+            store_ids = [
+                int(store_choices[i]) if has_store[i] else None for i in range(count)
+            ]
 
         # Generate emails (unique)
         seen_emails: set[str] = set()
