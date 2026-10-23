@@ -1,6 +1,6 @@
 """One-time script to build src/retail_gen/data/zips.csv from uszipcode.
 
-Run: uv run --with uszipcode python scripts/build_zips.py
+Run: uv run --with uszipcode python scripts/build_zip_codes.py
 """
 
 import csv
