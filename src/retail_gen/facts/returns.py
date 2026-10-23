@@ -1,9 +1,8 @@
 """Returns fact table generator. Samples from existing transaction/order items."""
 
 from __future__ import annotations
-
-import logging
 from datetime import date, timedelta
+import logging
 from pathlib import Path
 
 import numpy as np

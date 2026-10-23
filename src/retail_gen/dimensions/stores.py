@@ -1,13 +1,12 @@
 """Store dimension entity (~150 stores, fixed count)."""
 
 from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import date
 from typing import ClassVar
 
-import numpy as np
 from faker import Faker
+import numpy as np
 
 from retail_gen.lib.providers.address import AddressProvider, STATE_TO_REGION
 from retail_gen.lib.table import Table
@@ -60,22 +59,28 @@ class Store(metaclass=Table):
         cls.instances = []
 
         # Pre-determine store types
-        types = cls._rng.choice(
-            STORE_TYPES, size=count, p=STORE_TYPE_WEIGHTS
-        ).tolist()
+        types = cls._rng.choice(STORE_TYPES, size=count, p=STORE_TYPE_WEIGHTS).tolist()
 
         # Flagship stores get top-metro addresses, others get general population-weighted
         flagship_indices = [i for i, t in enumerate(types) if t == "Flagship"]
         other_indices = [i for i, t in enumerate(types) if t != "Flagship"]
 
         # Generate addresses
-        flagship_addrs = cls._addr_provider.sample(
-            len(flagship_indices), top_n_metros=20
-        ) if flagship_indices else {k: [] for k in ["zip", "city", "state", "latitude", "longitude"]}
-        other_addrs = cls._addr_provider.sample(len(other_indices)) if other_indices else {k: [] for k in ["zip", "city", "state", "latitude", "longitude"]}
+        flagship_addrs = (
+            cls._addr_provider.sample(len(flagship_indices), top_n_metros=20)
+            if flagship_indices
+            else {k: [] for k in ["zip", "city", "state", "latitude", "longitude"]}
+        )
+        other_addrs = (
+            cls._addr_provider.sample(len(other_indices))
+            if other_indices
+            else {k: [] for k in ["zip", "city", "state", "latitude", "longitude"]}
+        )
 
         # Merge addresses back in order
-        all_addrs: dict[str, list] = {k: [None] * count for k in ["zip", "city", "state", "latitude", "longitude"]}
+        all_addrs: dict[str, list] = {
+            k: [None] * count for k in ["zip", "city", "state", "latitude", "longitude"]
+        }
         for pos, idx in enumerate(flagship_indices):
             for k in all_addrs:
                 all_addrs[k][idx] = flagship_addrs[k][pos]

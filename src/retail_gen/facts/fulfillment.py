@@ -1,11 +1,10 @@
 """Fulfillment fact table generator. 1:1 with non-cancelled ecommerce orders."""
 
 from __future__ import annotations
-
-import logging
-import uuid
 from datetime import date
+import logging
 from pathlib import Path
+import uuid
 
 import numpy as np
 import pandas as pd

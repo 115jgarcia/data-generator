@@ -8,9 +8,8 @@ Pass 2: Compute order totals, backfill shipping_cost, write both to Parquet.
 """
 
 from __future__ import annotations
-
-import logging
 from datetime import date
+import logging
 from pathlib import Path
 
 import numpy as np

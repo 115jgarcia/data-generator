@@ -6,12 +6,11 @@ Usage:
 """
 
 from __future__ import annotations
-
 import argparse
-import logging
-import time
 from datetime import date
+import logging
 from pathlib import Path
+import time
 
 from retail_gen.config import Config
 

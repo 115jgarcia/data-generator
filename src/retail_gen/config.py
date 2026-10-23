@@ -1,10 +1,9 @@
 """Configuration loaded from environment variables."""
 
 from __future__ import annotations
-
-import os
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv

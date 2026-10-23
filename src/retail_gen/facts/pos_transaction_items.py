@@ -5,7 +5,7 @@ Product selection: two-level weighting (category revenue share, then hero 10x bo
 """
 
 from __future__ import annotations
-
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -13,10 +13,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from retail_gen.dimensions.products import CATEGORY_CONFIG
 from retail_gen.dimensions.customers import LOYALTY_DISCOUNT_PROB
-
-import logging
+from retail_gen.dimensions.products import CATEGORY_CONFIG
 
 logger = logging.getLogger(__name__)
 

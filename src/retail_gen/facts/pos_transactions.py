@@ -1,7 +1,6 @@
 """POS Transactions fact table generator (~400K at dev scale)."""
 
 from __future__ import annotations
-
 from datetime import date
 from pathlib import Path
 
@@ -9,9 +8,9 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 
+from retail_gen.dimensions.customers import LOYALTY_FREQUENCY
 from retail_gen.lib.batch import BatchGenerator
 from retail_gen.lib.providers.temporal import generate_timestamps
-from retail_gen.dimensions.customers import LOYALTY_FREQUENCY
 
 PAYMENT_METHODS = ["Credit", "Debit", "Cash", "Mobile"]
 PAYMENT_WEIGHTS = np.array([0.45, 0.30, 0.15, 0.10])
