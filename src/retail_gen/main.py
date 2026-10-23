@@ -6,10 +6,9 @@ Usage:
 """
 
 from __future__ import annotations
+
 import argparse
-from datetime import date
 import logging
-from pathlib import Path
 import time
 
 from retail_gen.config import Config
@@ -101,8 +100,8 @@ def generate_all(cfg: Config, only: list[str] | None = None) -> None:
 
     if "customers" in entities:
         t0 = time.time()
-        from retail_gen.dimensions.stores import Store
         from retail_gen.dimensions.customers import Customer
+        from retail_gen.dimensions.stores import Store
 
         Customer.generate(
             cfg.n_customers,
@@ -118,8 +117,8 @@ def generate_all(cfg: Config, only: list[str] | None = None) -> None:
     # --- POS Facts ---
     if "pos_transactions" in entities:
         t0 = time.time()
-        from retail_gen.dimensions.stores import Store
         from retail_gen.dimensions.customers import Customer
+        from retail_gen.dimensions.stores import Store
         from retail_gen.facts.pos_transactions import PosTransactions
 
         gen = PosTransactions(
@@ -140,8 +139,8 @@ def generate_all(cfg: Config, only: list[str] | None = None) -> None:
 
     if "pos_transaction_items" in entities:
         t0 = time.time()
-        from retail_gen.dimensions.products import Product
         from retail_gen.dimensions.customers import Customer
+        from retail_gen.dimensions.products import Product
         from retail_gen.facts.pos_transaction_items import PosTransactionItems
 
         txn_df = pd.read_parquet(output / "pos_transactions")
@@ -210,8 +209,8 @@ def generate_all(cfg: Config, only: list[str] | None = None) -> None:
 
     if "inventory_snapshots" in entities:
         t0 = time.time()
-        from retail_gen.dimensions.stores import Store
         from retail_gen.dimensions.products import Product
+        from retail_gen.dimensions.stores import Store
         from retail_gen.facts.inventory_snapshots import InventorySnapshotGenerator
 
         gen = InventorySnapshotGenerator(

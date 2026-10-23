@@ -1,14 +1,15 @@
 """Store dimension entity (~150 stores, fixed count)."""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import date
 from typing import ClassVar
 
-from faker import Faker
 import numpy as np
+from faker import Faker
 
-from retail_gen.lib.providers.address import AddressProvider, STATE_TO_REGION
+from retail_gen.lib.providers.address import STATE_TO_REGION, AddressProvider
 from retail_gen.lib.table import Table
 
 # Store type weights

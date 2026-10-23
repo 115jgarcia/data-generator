@@ -1,6 +1,7 @@
 """POS Transactions fact table generator (~400K at dev scale)."""
 
 from __future__ import annotations
+
 from datetime import date
 from pathlib import Path
 

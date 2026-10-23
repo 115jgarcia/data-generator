@@ -5,6 +5,7 @@ Product selection: two-level weighting (category revenue share, then hero 10x bo
 """
 
 from __future__ import annotations
+
 import logging
 from pathlib import Path
 
