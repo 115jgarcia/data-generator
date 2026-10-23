@@ -36,18 +36,20 @@ RETURN_CHANNEL_WEIGHTS = np.array([0.60, 0.40])
 CONDITIONS = ["New", "Opened", "Damaged", "Used"]
 CONDITION_WEIGHTS = np.array([0.40, 0.35, 0.15, 0.10])
 
-SCHEMA = pa.schema([
-    ("id", pa.int64()),
-    ("original_transaction_type", pa.string()),
-    ("original_transaction_id", pa.int64()),
-    ("product_id", pa.int64()),
-    ("customer_id", pa.int64()),  # nullable
-    ("return_date", pa.date32()),
-    ("reason", pa.string()),
-    ("refund_amount", pa.float64()),
-    ("return_channel", pa.string()),
-    ("condition", pa.string()),
-])
+SCHEMA = pa.schema(
+    [
+        ("id", pa.int64()),
+        ("original_transaction_type", pa.string()),
+        ("original_transaction_id", pa.int64()),
+        ("product_id", pa.int64()),
+        ("customer_id", pa.int64()),  # nullable
+        ("return_date", pa.date32()),
+        ("reason", pa.string()),
+        ("refund_amount", pa.float64()),
+        ("return_channel", pa.string()),
+        ("condition", pa.string()),
+    ]
+)
 
 
 class ReturnsGenerator:
@@ -58,12 +60,12 @@ class ReturnsGenerator:
         ecom_items_df: pd.DataFrame,
         ecom_orders_df: pd.DataFrame,
         product_instances: list,
+        output_dir: Path,
         seed: int = 42,
-        output_dir: str | Path = "output",
     ) -> None:
         self._seed = seed
         self._rng = np.random.default_rng(seed)
-        self._output_dir = Path(output_dir) / "returns"
+        self._output_dir = output_dir / "returns"
         self._output_dir.mkdir(parents=True, exist_ok=True)
         self._product_categories = {p.id: p.category for p in product_instances}
         self._product_prices = {p.id: p.retail_price for p in product_instances}
@@ -88,7 +90,9 @@ class ReturnsGenerator:
             parent_id_col = "id"
             merged = items_df.merge(
                 parent_df[[parent_id_col, date_col, "customer_id"]],
-                left_on=id_col, right_on=parent_id_col, suffixes=("", "_parent"),
+                left_on=id_col,
+                right_on=parent_id_col,
+                suffixes=("", "_parent"),
             )
 
             # Determine return probability per item based on category
@@ -105,7 +109,9 @@ class ReturnsGenerator:
                 continue
 
             ret_product_ids = returned["product_id"].values.astype(int)
-            ret_categories = np.array([self._product_categories.get(pid, "") for pid in ret_product_ids])
+            ret_categories = np.array(
+                [self._product_categories.get(pid, "") for pid in ret_product_ids]
+            )
             ret_parent_dates = pd.to_datetime(returned[date_col].values)
             ret_offsets = rng.integers(1, 31, size=n_ret)
             ret_dates = (ret_parent_dates + pd.to_timedelta(ret_offsets, unit="D")).date
@@ -118,8 +124,12 @@ class ReturnsGenerator:
                 rng.choice(REASONS_DEFAULT, size=n_ret, p=REASONS_DEFAULT_WEIGHTS),
             )
 
-            ret_prices = np.array([self._product_prices.get(pid, 0.0) for pid in ret_product_ids])
-            refunds = np.round(ret_prices * returned["quantity"].values.astype(float), 2)
+            ret_prices = np.array(
+                [self._product_prices.get(pid, 0.0) for pid in ret_product_ids]
+            )
+            refunds = np.round(
+                ret_prices * returned["quantity"].values.astype(float), 2
+            )
             channels = rng.choice(RETURN_CHANNELS, size=n_ret, p=RETURN_CHANNEL_WEIGHTS)
             conditions = rng.choice(CONDITIONS, size=n_ret, p=CONDITION_WEIGHTS)
 
@@ -127,18 +137,20 @@ class ReturnsGenerator:
             cust_id_vals = [int(c) if pd.notna(c) else None for c in cust_ids]
 
             for i in range(n_ret):
-                returns_rows.append({
-                    "id": return_id,
-                    "original_transaction_type": txn_type,
-                    "original_transaction_id": int(returned[id_col].values[i]),
-                    "product_id": int(ret_product_ids[i]),
-                    "customer_id": cust_id_vals[i],
-                    "return_date": ret_dates[i],
-                    "reason": reasons[i],
-                    "refund_amount": float(refunds[i]),
-                    "return_channel": channels[i],
-                    "condition": conditions[i],
-                })
+                returns_rows.append(
+                    {
+                        "id": return_id,
+                        "original_transaction_type": txn_type,
+                        "original_transaction_id": int(returned[id_col].values[i]),
+                        "product_id": int(ret_product_ids[i]),
+                        "customer_id": cust_id_vals[i],
+                        "return_date": ret_dates[i],
+                        "reason": reasons[i],
+                        "refund_amount": float(refunds[i]),
+                        "return_channel": channels[i],
+                        "condition": conditions[i],
+                    }
+                )
                 return_id += 1
 
         df = pd.DataFrame(returns_rows)
