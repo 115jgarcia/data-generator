@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import date
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -169,7 +170,7 @@ class EcommerceGenerator:
         # Status by age
         order_dates_dt = pd.to_datetime(timestamps)
         gen_dt = pd.Timestamp(self._generation_date)
-        age_days = (gen_dt - order_dates_dt).days
+        age_days = cast(pd.TimedeltaIndex, gen_dt - order_dates_dt).days
         statuses = []
         for age in age_days:
             if age < 2:
@@ -225,12 +226,13 @@ class EcommerceGenerator:
         items_df["line_total"] = (
             items_df["unit_price"] * items_df["quantity"] - items_df["discount_amount"]
         )
-        order_totals = items_df.groupby("order_id")["line_total"].sum()
+        order_totals = cast(pd.Series, items_df.groupby("order_id")["line_total"].sum())
 
         shipping_costs = np.array([SHIPPING_COSTS[m] for m in ship_methods])
         for i in range(n):
             order_id = i + 1
-            if order_totals.get(order_id, 0) > 75:
+            total = cast(float, order_totals.get(order_id, 0))
+            if total > 75:
                 shipping_costs[i] = 0.0
 
         # Build orders DataFrame

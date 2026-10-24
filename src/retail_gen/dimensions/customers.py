@@ -139,5 +139,5 @@ class Customer(metaclass=Table):
             )
 
     @classmethod
-    def _make_one(cls, i: int) -> "Customer":
+    def _make_one(cls, i: int) -> Customer:
         raise NotImplementedError("Use Customer.generate() instead")

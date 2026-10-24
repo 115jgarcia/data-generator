@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import ClassVar
 
 import numpy as np
 from faker import Faker
@@ -42,11 +41,6 @@ class Store(metaclass=Table):
     square_footage: int
     opening_date: date
 
-    # Class-level providers (not serialized to Parquet)
-    _rng: ClassVar[np.random.Generator | None] = None
-    _addr_provider: ClassVar[AddressProvider | None] = None
-    _faker: ClassVar[Faker | None] = None
-
     @classmethod
     def _init_providers(cls, seed: int = 42) -> None:
         cls._rng = np.random.default_rng(seed)
@@ -83,11 +77,11 @@ class Store(metaclass=Table):
             k: [None] * count for k in ["zip", "city", "state", "latitude", "longitude"]
         }
         for pos, idx in enumerate(flagship_indices):
-            for k in all_addrs:
-                all_addrs[k][idx] = flagship_addrs[k][pos]
+            for k, value in all_addrs.items():
+                value[idx] = flagship_addrs[k][pos]
         for pos, idx in enumerate(other_indices):
-            for k in all_addrs:
-                all_addrs[k][idx] = other_addrs[k][pos]
+            for k, value in all_addrs.items():
+                value[idx] = other_addrs[k][pos]
 
         # Generate opening dates (uniform)
         open_start_ord = OPENING_START.toordinal()
@@ -120,5 +114,5 @@ class Store(metaclass=Table):
             )
 
     @classmethod
-    def _make_one(cls, i: int) -> "Store":
+    def _make_one(cls, i: int) -> Store:
         raise NotImplementedError("Use Store.generate() instead")

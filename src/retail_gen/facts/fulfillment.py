@@ -47,7 +47,7 @@ class FulfillmentGenerator:
         seed: int = 42,
     ) -> None:
         # Filter to non-cancelled orders
-        self._orders = orders_df[orders_df["status"] != "Cancelled"].copy()
+        self._orders = orders_df.loc[orders_df["status"] != "Cancelled"].copy()
         self._generation_date = pd.Timestamp(generation_date)
         self._rng = np.random.default_rng(seed)
         self._output_dir = output_dir / "fulfillment"
