@@ -6,6 +6,7 @@ Product selection: two-level weighting (category revenue share, then hero 10x bo
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -13,10 +14,8 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from retail_gen.dimensions.products import CATEGORY_CONFIG
 from retail_gen.dimensions.customers import LOYALTY_DISCOUNT_PROB
-
-import logging
+from retail_gen.dimensions.products import CATEGORY_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -29,41 +28,44 @@ class PosTransactionItems:
     """
 
     name = "pos_transaction_items"
-    schema = pa.schema([
-        ("id", pa.int64()),
-        ("transaction_id", pa.int64()),
-        ("product_id", pa.int64()),
-        ("quantity", pa.int32()),
-        ("unit_price", pa.float64()),
-        ("discount_amount", pa.float64()),
-    ])
+    schema = pa.schema(
+        [
+            ("id", pa.int64()),
+            ("transaction_id", pa.int64()),
+            ("product_id", pa.int64()),
+            ("quantity", pa.int32()),
+            ("unit_price", pa.float64()),
+            ("discount_amount", pa.float64()),
+        ]
+    )
 
     def __init__(
         self,
         transaction_df: pd.DataFrame,
         product_instances: list,
         customer_instances: list,
+        output_dir: Path,
         seed: int = 42,
         chunk_size: int = 100_000,
-        output_dir: str | None = None,
     ) -> None:
         self._txn_df = transaction_df
         self._seed = seed
         self._rng = np.random.default_rng(seed)
         self._chunk_size = chunk_size
-        self._output_dir = (
-            Path(output_dir or "output") / self.name
-        )
+        self._output_dir = output_dir / self.name
         self._output_dir.mkdir(parents=True, exist_ok=True)
 
         # Build product weight arrays (two-level: category then product)
         self._product_ids = np.array(sorted(p.id for p in product_instances))
         self._product_prices = {p.id: p.retail_price for p in product_instances}
-        self._product_price_arr = np.array([self._product_prices[pid] for pid in self._product_ids])
+        self._product_price_arr = np.array(
+            [self._product_prices[pid] for pid in self._product_ids]
+        )
         self._product_categories = {p.id: p.category for p in product_instances}
 
         # Two-level product weights: (cat_weight / n_active_in_cat) * hero_boost
         from collections import Counter
+
         active_products = [p for p in product_instances if p.status == "Active"]
         cat_counts = Counter(p.category for p in active_products)
         weights = []
@@ -101,7 +103,9 @@ class PosTransactionItems:
         )
 
         # Quantity: Poisson(λ=1.5), min 1
-        quantities = np.clip(rng.poisson(1.5, size=total_items), 1, None).astype(np.int32)
+        quantities = np.clip(rng.poisson(1.5, size=total_items), 1, None).astype(
+            np.int32
+        )
 
         # Unit prices: vectorized via aligned price array + searchsorted
         price_idx = np.searchsorted(self._product_ids, product_choices)
@@ -110,10 +114,14 @@ class PosTransactionItems:
         # Discount: vectorized by loyalty tier
         subtotals = unit_prices * quantities
         # Build per-item discount probability from customer tier
-        tier_arr = np.array([
-            self._customer_tiers.get(int(cid), "None") if not pd.isna(cid) else "None"
-            for cid in item_cust_ids
-        ])
+        tier_arr = np.array(
+            [
+                self._customer_tiers.get(int(cid), "None")
+                if not pd.isna(cid)
+                else "None"
+                for cid in item_cust_ids
+            ]
+        )
         disc_probs = np.array([LOYALTY_DISCOUNT_PROB.get(t, 0.30) for t in tier_arr])
         # Vectorized: roll once, apply mask
         rolls = rng.random(size=total_items)
@@ -127,17 +135,21 @@ class PosTransactionItems:
         chunk_idx = 0
         for start in range(0, total_items, self._chunk_size):
             end = min(start + self._chunk_size, total_items)
-            chunk_df = pd.DataFrame({
-                "id": all_ids[start:end],
-                "transaction_id": item_txn_ids[start:end],
-                "product_id": product_choices[start:end],
-                "quantity": quantities[start:end],
-                "unit_price": unit_prices[start:end],
-                "discount_amount": discount_amounts[start:end],
-            })
+            chunk_df = pd.DataFrame(
+                {
+                    "id": all_ids[start:end],
+                    "transaction_id": item_txn_ids[start:end],
+                    "product_id": product_choices[start:end],
+                    "quantity": quantities[start:end],
+                    "unit_price": unit_prices[start:end],
+                    "discount_amount": discount_amounts[start:end],
+                }
+            )
             table = pa.Table.from_pandas(chunk_df, schema=self.schema)
             out_path = self._output_dir / f"chunk_{chunk_idx:03d}.parquet"
             pq.write_table(table, out_path)
             chunk_idx += 1
 
-        logger.info("%s: done — %d items across %d transactions", self.name, total_items, n_txns)
+        logger.info(
+            "%s: done — %d items across %d transactions", self.name, total_items, n_txns
+        )

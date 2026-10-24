@@ -1,13 +1,13 @@
 """One-time script to build src/retail_gen/data/zips.csv from uszipcode.
 
-Run: uv run --with uszipcode python scripts/build_zips.py
+Run: uv run --with uszipcode python scripts/build_zip_codes.py
 """
 
 import csv
 from pathlib import Path
 from uszipcode import SearchEngine
 
-out_path = Path("src/retail_gen/data/zips.csv")
+out_path = Path("src/retail_gen/data/zip_codes.csv")
 out_path.parent.mkdir(parents=True, exist_ok=True)
 
 search = SearchEngine()

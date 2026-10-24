@@ -1,6 +1,4 @@
-import os
 import pytest
-from pathlib import Path
 
 
 @pytest.fixture(autouse=True)
@@ -9,4 +7,5 @@ def _set_test_env(monkeypatch, tmp_path):
     monkeypatch.setenv("SCALE", "0.001")
     monkeypatch.setenv("SEED", "42")
     monkeypatch.setenv("HISTORY_START", "2023-01-01")
+    monkeypatch.setenv("HISTORY_END", "2023-01-07")
     monkeypatch.setenv("OUTPUT_DIR", str(tmp_path / "output"))

@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import date
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -34,32 +35,38 @@ SHIPPING_COSTS = {"Standard": 5.99, "Express": 12.99, "Next-day": 19.99}
 
 # Order status by age bucket
 STATUS_BUCKETS = {
-    "recent": (["Pending", "Shipped", "Delivered"], [0.40, 0.50, 0.10]),       # < 2 days
-    "mid": (["Pending", "Shipped", "Delivered", "Cancelled", "Returned"],
-            [0.05, 0.25, 0.60, 0.05, 0.05]),                                   # 2-7 days
-    "old": (["Delivered", "Cancelled", "Returned"], [0.85, 0.05, 0.10]),        # > 7 days
+    "recent": (["Pending", "Shipped", "Delivered"], [0.40, 0.50, 0.10]),  # < 2 days
+    "mid": (
+        ["Pending", "Shipped", "Delivered", "Cancelled", "Returned"],
+        [0.05, 0.25, 0.60, 0.05, 0.05],
+    ),  # 2-7 days
+    "old": (["Delivered", "Cancelled", "Returned"], [0.85, 0.05, 0.10]),  # > 7 days
 }
 
-ORDERS_SCHEMA = pa.schema([
-    ("id", pa.int64()),
-    ("customer_id", pa.int64()),
-    ("order_date", pa.timestamp("us")),
-    ("status", pa.string()),
-    ("shipping_address_city", pa.string()),
-    ("shipping_address_state", pa.string()),
-    ("channel", pa.string()),
-    ("shipping_method", pa.string()),
-    ("shipping_cost", pa.float64()),
-])
+ORDERS_SCHEMA = pa.schema(
+    [
+        ("id", pa.int64()),
+        ("customer_id", pa.int64()),
+        ("order_date", pa.timestamp("us")),
+        ("status", pa.string()),
+        ("shipping_address_city", pa.string()),
+        ("shipping_address_state", pa.string()),
+        ("channel", pa.string()),
+        ("shipping_method", pa.string()),
+        ("shipping_cost", pa.float64()),
+    ]
+)
 
-ITEMS_SCHEMA = pa.schema([
-    ("id", pa.int64()),
-    ("order_id", pa.int64()),
-    ("product_id", pa.int64()),
-    ("quantity", pa.int32()),
-    ("unit_price", pa.float64()),
-    ("discount_amount", pa.float64()),
-])
+ITEMS_SCHEMA = pa.schema(
+    [
+        ("id", pa.int64()),
+        ("order_id", pa.int64()),
+        ("product_id", pa.int64()),
+        ("quantity", pa.int32()),
+        ("unit_price", pa.float64()),
+        ("discount_amount", pa.float64()),
+    ]
+)
 
 
 class EcommerceGenerator:
@@ -72,8 +79,8 @@ class EcommerceGenerator:
         product_instances: list,
         start_date: date,
         end_date: date,
+        output_dir: Path,
         seed: int = 42,
-        output_dir: str | Path = "output",
     ) -> None:
         self._total_orders = total_orders
         self._start_date = start_date
@@ -81,11 +88,12 @@ class EcommerceGenerator:
         self._generation_date = end_date
         self._seed = seed
         self._rng = np.random.default_rng(seed)
-        self._output_dir = Path(output_dir)
+        self._output_dir = output_dir
 
         # Eligible customers: non-churned, online/both pref
         eligible = [
-            c for c in customer_instances
+            c
+            for c in customer_instances
             if c.status != "Churned" and c.channel_preference in ("Online", "Both")
         ]
         self._customer_ids = np.array([c.id for c in eligible])
@@ -97,9 +105,12 @@ class EcommerceGenerator:
 
         # Two-level product weights: (cat_weight / n_active_in_cat) * hero_boost
         from collections import Counter
+
         self._product_ids = np.array(sorted(p.id for p in product_instances))
         self._product_prices = {p.id: p.retail_price for p in product_instances}
-        self._product_price_arr = np.array([self._product_prices[pid] for pid in self._product_ids])
+        self._product_price_arr = np.array(
+            [self._product_prices[pid] for pid in self._product_ids]
+        )
         active_products = [p for p in product_instances if p.status == "Active"]
         cat_counts = Counter(p.category for p in active_products)
         weights = []
@@ -124,8 +135,11 @@ class EcommerceGenerator:
 
         # Timestamps
         timestamps = generate_timestamps(
-            n=n, start_date=self._start_date, end_date=self._end_date,
-            yoy_growth=0.12, seed=self._seed + 1,  # offset seed from POS
+            n=n,
+            start_date=self._start_date,
+            end_date=self._end_date,
+            yoy_growth=0.12,
+            seed=self._seed + 1,  # offset seed from POS
         )
 
         # Customer assignment
@@ -139,18 +153,24 @@ class EcommerceGenerator:
             for i, cid in enumerate(customer_ids)
         ]
         ship_states = [
-            self._customer_states[cid] if use_customer_addr[i] else alt_addrs["state"][i]
+            self._customer_states[cid]
+            if use_customer_addr[i]
+            else alt_addrs["state"][i]
             for i, cid in enumerate(customer_ids)
         ]
 
         # Channel, shipping method
-        channels = np.array(CHANNELS)[rng.choice(len(CHANNELS), size=n, p=CHANNEL_WEIGHTS)]
-        ship_methods = np.array(SHIPPING_METHODS)[rng.choice(len(SHIPPING_METHODS), size=n, p=SHIPPING_WEIGHTS)]
+        channels = np.array(CHANNELS)[
+            rng.choice(len(CHANNELS), size=n, p=CHANNEL_WEIGHTS)
+        ]
+        ship_methods = np.array(SHIPPING_METHODS)[
+            rng.choice(len(SHIPPING_METHODS), size=n, p=SHIPPING_WEIGHTS)
+        ]
 
         # Status by age
         order_dates_dt = pd.to_datetime(timestamps)
         gen_dt = pd.Timestamp(self._generation_date)
-        age_days = (gen_dt - order_dates_dt).days
+        age_days = cast(pd.TimedeltaIndex, gen_dt - order_dates_dt).days
         statuses = []
         for age in age_days:
             if age < 2:
@@ -168,8 +188,12 @@ class EcommerceGenerator:
         item_order_ids = np.repeat(np.arange(1, n + 1, dtype=np.int64), items_per_order)
         item_cust_ids = np.repeat(customer_ids, items_per_order)
 
-        product_choices = rng.choice(self._product_ids, size=total_items, p=self._product_weights)
-        quantities = np.clip(rng.poisson(1.5, size=total_items), 1, None).astype(np.int32)
+        product_choices = rng.choice(
+            self._product_ids, size=total_items, p=self._product_weights
+        )
+        quantities = np.clip(rng.poisson(1.5, size=total_items), 1, None).astype(
+            np.int32
+        )
         # Vectorized price lookup via sorted product_ids + searchsorted
         price_idx = np.searchsorted(self._product_ids, product_choices)
         unit_prices = self._product_price_arr[price_idx]
@@ -177,7 +201,9 @@ class EcommerceGenerator:
         # Discounts: vectorized, loyalty-tier based
         # Ecommerce has ~35% discount rate (vs POS ~30%), so scale up by 0.35/0.30
         subtotals = unit_prices * quantities
-        tier_arr = np.array([self._customer_tiers.get(int(cid), "None") for cid in item_cust_ids])
+        tier_arr = np.array(
+            [self._customer_tiers.get(int(cid), "None") for cid in item_cust_ids]
+        )
         disc_probs = np.array([LOYALTY_DISCOUNT_PROB.get(t, 0.30) for t in tier_arr])
         disc_probs = disc_probs * (0.35 / 0.30)  # scale POS base rate to ecommerce rate
         rolls = rng.random(size=total_items)
@@ -185,37 +211,44 @@ class EcommerceGenerator:
         pcts = rng.uniform(0.05, 0.25, size=total_items)
         discount_amounts = np.where(gets_discount, np.round(subtotals * pcts, 2), 0.0)
 
-        items_df = pd.DataFrame({
-            "id": np.arange(1, total_items + 1, dtype=np.int64),
-            "order_id": item_order_ids,
-            "product_id": product_choices,
-            "quantity": quantities,
-            "unit_price": unit_prices,
-            "discount_amount": discount_amounts,
-        })
+        items_df = pd.DataFrame(
+            {
+                "id": np.arange(1, total_items + 1, dtype=np.int64),
+                "order_id": item_order_ids,
+                "product_id": product_choices,
+                "quantity": quantities,
+                "unit_price": unit_prices,
+                "discount_amount": discount_amounts,
+            }
+        )
 
         # --- PASS 2: Compute order totals, backfill shipping_cost ---
-        items_df["line_total"] = items_df["unit_price"] * items_df["quantity"] - items_df["discount_amount"]
-        order_totals = items_df.groupby("order_id")["line_total"].sum()
+        items_df["line_total"] = (
+            items_df["unit_price"] * items_df["quantity"] - items_df["discount_amount"]
+        )
+        order_totals = cast(pd.Series, items_df.groupby("order_id")["line_total"].sum())
 
         shipping_costs = np.array([SHIPPING_COSTS[m] for m in ship_methods])
         for i in range(n):
             order_id = i + 1
-            if order_totals.get(order_id, 0) > 75:
+            total = cast(float, order_totals.get(order_id, 0))
+            if total > 75:
                 shipping_costs[i] = 0.0
 
         # Build orders DataFrame
-        orders_df = pd.DataFrame({
-            "id": np.arange(1, n + 1, dtype=np.int64),
-            "customer_id": customer_ids,
-            "order_date": order_dates_dt,
-            "status": statuses,
-            "shipping_address_city": ship_cities,
-            "shipping_address_state": ship_states,
-            "channel": channels,
-            "shipping_method": ship_methods,
-            "shipping_cost": shipping_costs,
-        })
+        orders_df = pd.DataFrame(
+            {
+                "id": np.arange(1, n + 1, dtype=np.int64),
+                "customer_id": customer_ids,
+                "order_date": order_dates_dt,
+                "status": statuses,
+                "shipping_address_city": ship_cities,
+                "shipping_address_state": ship_states,
+                "channel": channels,
+                "shipping_method": ship_methods,
+                "shipping_cost": shipping_costs,
+            }
+        )
 
         # Drop helper column from items
         items_df = items_df.drop(columns=["line_total"])

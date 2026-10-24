@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -23,20 +23,14 @@ class Config:
             os.getenv("HISTORY_START", "2023-01-01")
         )
     )
-    generation_date: date = field(default_factory=lambda: date.today())
-    output_dir: Path = field(
-        default_factory=lambda: Path(os.getenv("OUTPUT_DIR", "output"))
+    history_end: date = field(
+        default_factory=lambda: date.fromisoformat(
+            os.getenv("HISTORY_END") or datetime.now(tz=UTC).date().isoformat()
+        )
     )
 
-    # GCP settings
-    bq_project: str = field(
-        default_factory=lambda: os.getenv("BQ_PROJECT", "mkt-analytics-project")
-    )
-    bq_dataset: str = field(
-        default_factory=lambda: os.getenv("BQ_DATASET", "retail_raw")
-    )
-    gcs_bucket: str = field(
-        default_factory=lambda: os.getenv("GCS_BUCKET", "")
+    output_dir: Path = field(
+        default_factory=lambda: Path(os.getenv("OUTPUT_DIR", "output"))
     )
 
     # --- Fixed dimensions (do not scale) ---

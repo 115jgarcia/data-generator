@@ -23,17 +23,19 @@ SHIPPING_OFFSETS = {
     "Next-day": (1, 1),
 }
 
-SCHEMA = pa.schema([
-    ("id", pa.int64()),
-    ("order_id", pa.int64()),
-    ("ship_date", pa.timestamp("us")),
-    ("estimated_delivery_date", pa.timestamp("us")),
-    ("actual_delivery_date", pa.timestamp("us")),  # nullable
-    ("carrier", pa.string()),
-    ("tracking_number", pa.string()),
-    ("status", pa.string()),
-    ("is_on_time", pa.bool_()),
-])
+SCHEMA = pa.schema(
+    [
+        ("id", pa.int64()),
+        ("order_id", pa.int64()),
+        ("ship_date", pa.timestamp("us")),
+        ("estimated_delivery_date", pa.timestamp("us")),
+        ("actual_delivery_date", pa.timestamp("us")),  # nullable
+        ("carrier", pa.string()),
+        ("tracking_number", pa.string()),
+        ("status", pa.string()),
+        ("is_on_time", pa.bool_()),
+    ]
+)
 
 
 class FulfillmentGenerator:
@@ -41,14 +43,14 @@ class FulfillmentGenerator:
         self,
         orders_df: pd.DataFrame,
         generation_date: date,
+        output_dir: Path,
         seed: int = 42,
-        output_dir: str | Path = "output",
     ) -> None:
         # Filter to non-cancelled orders
-        self._orders = orders_df[orders_df["status"] != "Cancelled"].copy()
+        self._orders = orders_df.loc[orders_df["status"] != "Cancelled"].copy()
         self._generation_date = pd.Timestamp(generation_date)
         self._rng = np.random.default_rng(seed)
-        self._output_dir = Path(output_dir) / "fulfillment"
+        self._output_dir = output_dir / "fulfillment"
         self._output_dir.mkdir(parents=True, exist_ok=True)
 
     def generate(self) -> None:
@@ -57,18 +59,24 @@ class FulfillmentGenerator:
         n = len(orders)
 
         order_ids = orders["id"].to_numpy()
-        order_dates = pd.Series(pd.to_datetime(orders["order_date"].to_numpy()), name="order_date")
+        order_dates = pd.Series(
+            pd.to_datetime(orders["order_date"].to_numpy()), name="order_date"
+        )
         ship_methods = orders["shipping_method"].to_numpy()
 
         # Ship date: order_date + Poisson(λ=1) days
         ship_offsets = pd.to_timedelta(rng.poisson(1, size=n), unit="D")
-        ship_dates = pd.Series(order_dates.values + ship_offsets.values, dtype="datetime64[us]")
+        ship_dates = pd.Series(
+            order_dates.values + ship_offsets.values, dtype="datetime64[us]"
+        )
 
         # Estimated delivery: ship_date + method offset
-        est_offsets = np.array([
-            rng.integers(SHIPPING_OFFSETS[m][0], SHIPPING_OFFSETS[m][1] + 1)
-            for m in ship_methods
-        ])
+        est_offsets = np.array(
+            [
+                rng.integers(SHIPPING_OFFSETS[m][0], SHIPPING_OFFSETS[m][1] + 1)
+                for m in ship_methods
+            ]
+        )
         est_delivery = pd.Series(
             ship_dates.values + pd.to_timedelta(est_offsets, unit="D").values,
             dtype="datetime64[us]",
@@ -85,7 +93,8 @@ class FulfillmentGenerator:
             delta_days,
         )
         actual_delivery = pd.Series(
-            est_delivery.values + pd.to_timedelta(np.round(delta_days).astype(int), unit="D").values,
+            est_delivery.values
+            + pd.to_timedelta(np.round(delta_days).astype(int), unit="D").values,
             dtype="datetime64[us]",
         )
 
@@ -109,10 +118,7 @@ class FulfillmentGenerator:
         # Tracking numbers (UUID4-style from two 64-bit halves)
         hi = rng.integers(0, 2**63, size=n, dtype=np.int64)
         lo = rng.integers(0, 2**63, size=n, dtype=np.int64)
-        tracking = [
-            str(uuid.UUID(int=(int(h) << 64) | int(l)))
-            for h, l in zip(hi, lo)
-        ]
+        tracking = [str(uuid.UUID(int=(int(h) << 64) | int(l))) for h, l in zip(hi, lo)]
 
         # Fulfillment status derived from dates
         ff_statuses = []
@@ -122,17 +128,19 @@ class FulfillmentGenerator:
             else:
                 ff_statuses.append("Delivered")
 
-        df = pd.DataFrame({
-            "id": np.arange(1, n + 1, dtype=np.int64),
-            "order_id": order_ids,
-            "ship_date": ship_dates,
-            "estimated_delivery_date": est_delivery,
-            "actual_delivery_date": actual_delivery_series,
-            "carrier": carriers,
-            "tracking_number": tracking,
-            "status": ff_statuses,
-            "is_on_time": is_on_time_series,
-        })
+        df = pd.DataFrame(
+            {
+                "id": np.arange(1, n + 1, dtype=np.int64),
+                "order_id": order_ids,
+                "ship_date": ship_dates,
+                "estimated_delivery_date": est_delivery,
+                "actual_delivery_date": actual_delivery_series,
+                "carrier": carriers,
+                "tracking_number": tracking,
+                "status": ff_statuses,
+                "is_on_time": is_on_time_series,
+            }
+        )
 
         pq.write_table(
             pa.Table.from_pandas(df, schema=SCHEMA),

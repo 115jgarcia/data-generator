@@ -13,64 +13,130 @@ from retail_gen.lib.table import Table
 # Category config: (revenue_weight, avg_retail, margin, count_share, subcategories)
 CATEGORY_CONFIG = {
     "Apparel": {
-        "revenue_weight": 0.28, "avg_retail": 35.0, "margin": 0.55,
+        "revenue_weight": 0.28,
+        "avg_retail": 35.0,
+        "margin": 0.55,
         "count_share": 0.30,  # 1500/5000
         "subcategories": ["Tops", "Bottoms", "Outerwear", "Activewear", "Accessories"],
         "cat_code": "APP",
-        "weight_oz_mean": 8.0, "weight_oz_std": 3.0,
+        "weight_oz_mean": 8.0,
+        "weight_oz_std": 3.0,
     },
     "Home & Kitchen": {
-        "revenue_weight": 0.21, "avg_retail": 55.0, "margin": 0.45,
+        "revenue_weight": 0.21,
+        "avg_retail": 55.0,
+        "margin": 0.45,
         "count_share": 0.20,
         "subcategories": ["Cookware", "Bedding", "Storage", "Decor", "Appliances"],
         "cat_code": "HMK",
-        "weight_oz_mean": 32.0, "weight_oz_std": 20.0,
+        "weight_oz_mean": 32.0,
+        "weight_oz_std": 20.0,
     },
     "Electronics": {
-        "revenue_weight": 0.18, "avg_retail": 120.0, "margin": 0.30,
+        "revenue_weight": 0.18,
+        "avg_retail": 120.0,
+        "margin": 0.30,
         "count_share": 0.12,
-        "subcategories": ["Audio", "Accessories", "Wearables", "Chargers", "Smart Home"],
+        "subcategories": [
+            "Audio",
+            "Accessories",
+            "Wearables",
+            "Chargers",
+            "Smart Home",
+        ],
         "cat_code": "ELC",
-        "weight_oz_mean": 12.0, "weight_oz_std": 8.0,
+        "weight_oz_mean": 12.0,
+        "weight_oz_std": 8.0,
     },
     "Beauty & Personal Care": {
-        "revenue_weight": 0.12, "avg_retail": 28.0, "margin": 0.60,
+        "revenue_weight": 0.12,
+        "avg_retail": 28.0,
+        "margin": 0.60,
         "count_share": 0.14,
         "subcategories": ["Skincare", "Haircare", "Makeup", "Fragrance", "Bath & Body"],
         "cat_code": "BPC",
-        "weight_oz_mean": 6.0, "weight_oz_std": 3.0,
+        "weight_oz_mean": 6.0,
+        "weight_oz_std": 3.0,
     },
     "Sports & Outdoors": {
-        "revenue_weight": 0.10, "avg_retail": 65.0, "margin": 0.40,
+        "revenue_weight": 0.10,
+        "avg_retail": 65.0,
+        "margin": 0.40,
         "count_share": 0.10,
-        "subcategories": ["Fitness", "Outdoor Gear", "Team Sports", "Water Sports", "Camping"],
+        "subcategories": [
+            "Fitness",
+            "Outdoor Gear",
+            "Team Sports",
+            "Water Sports",
+            "Camping",
+        ],
         "cat_code": "SPO",
-        "weight_oz_mean": 24.0, "weight_oz_std": 16.0,
+        "weight_oz_mean": 24.0,
+        "weight_oz_std": 16.0,
     },
     "Food & Grocery": {
-        "revenue_weight": 0.06, "avg_retail": 12.0, "margin": 0.25,
+        "revenue_weight": 0.06,
+        "avg_retail": 12.0,
+        "margin": 0.25,
         "count_share": 0.08,
         "subcategories": ["Snacks", "Beverages", "Pantry", "Organic", "Specialty"],
         "cat_code": "FDG",
-        "weight_oz_mean": 16.0, "weight_oz_std": 10.0,
+        "weight_oz_mean": 16.0,
+        "weight_oz_std": 10.0,
     },
     "Toys & Games": {
-        "revenue_weight": 0.05, "avg_retail": 30.0, "margin": 0.50,
+        "revenue_weight": 0.05,
+        "avg_retail": 30.0,
+        "margin": 0.50,
         "count_share": 0.06,
-        "subcategories": ["Board Games", "Action Figures", "Puzzles", "Outdoor Play", "Educational"],
+        "subcategories": [
+            "Board Games",
+            "Action Figures",
+            "Puzzles",
+            "Outdoor Play",
+            "Educational",
+        ],
         "cat_code": "TOY",
-        "weight_oz_mean": 14.0, "weight_oz_std": 10.0,
+        "weight_oz_mean": 14.0,
+        "weight_oz_std": 10.0,
     },
 }
 
 SUBCAT_CODES = {
-    "Tops": "TOP", "Bottoms": "BTM", "Outerwear": "OUT", "Activewear": "ACT", "Accessories": "ACC",
-    "Cookware": "CKW", "Bedding": "BED", "Storage": "STR", "Decor": "DCR", "Appliances": "APL",
-    "Audio": "AUD", "Wearables": "WRB", "Chargers": "CHR", "Smart Home": "SMH",
-    "Skincare": "SKN", "Haircare": "HRC", "Makeup": "MKP", "Fragrance": "FRG", "Bath & Body": "BTH",
-    "Fitness": "FIT", "Outdoor Gear": "OGR", "Team Sports": "TMS", "Water Sports": "WTR", "Camping": "CMP",
-    "Snacks": "SNK", "Beverages": "BVR", "Pantry": "PNT", "Organic": "ORG", "Specialty": "SPC",
-    "Board Games": "BRD", "Action Figures": "ACF", "Puzzles": "PZL", "Outdoor Play": "OPL", "Educational": "EDU",
+    "Tops": "TOP",
+    "Bottoms": "BTM",
+    "Outerwear": "OUT",
+    "Activewear": "ACT",
+    "Accessories": "ACC",
+    "Cookware": "CKW",
+    "Bedding": "BED",
+    "Storage": "STR",
+    "Decor": "DCR",
+    "Appliances": "APL",
+    "Audio": "AUD",
+    "Wearables": "WRB",
+    "Chargers": "CHR",
+    "Smart Home": "SMH",
+    "Skincare": "SKN",
+    "Haircare": "HRC",
+    "Makeup": "MKP",
+    "Fragrance": "FRG",
+    "Bath & Body": "BTH",
+    "Fitness": "FIT",
+    "Outdoor Gear": "OGR",
+    "Team Sports": "TMS",
+    "Water Sports": "WTR",
+    "Camping": "CMP",
+    "Snacks": "SNK",
+    "Beverages": "BVR",
+    "Pantry": "PNT",
+    "Organic": "ORG",
+    "Specialty": "SPC",
+    "Board Games": "BRD",
+    "Action Figures": "ACF",
+    "Puzzles": "PZL",
+    "Outdoor Play": "OPL",
+    "Educational": "EDU",
 }
 
 # Curated hero SKUs — must sound like real retail products
@@ -166,7 +232,9 @@ class Product(metaclass=Table):
             cost = round(retail_price * (1 - margin), 2)
 
             # Weight
-            weight = max(0.5, round(rng.normal(cfg["weight_oz_mean"], cfg["weight_oz_std"]), 1))
+            weight = max(
+                0.5, round(rng.normal(cfg["weight_oz_mean"], cfg["weight_oz_std"]), 1)
+            )
 
             # Status
             status = "Active" if rng.random() < 0.90 else "Discontinued"
@@ -192,5 +260,5 @@ class Product(metaclass=Table):
             )
 
     @classmethod
-    def _make_one(cls, i: int) -> "Product":
+    def _make_one(cls, i: int) -> Product:
         raise NotImplementedError("Use Product.generate() instead")
